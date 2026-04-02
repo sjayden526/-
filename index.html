@@ -2,28 +2,73 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>S3ACJ 命运分配系统</title>
-
     <style>
-        /* 你的 CSS */
+        body { 
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+            background: #ffffff; color: #000; margin: 0; padding: 10px; 
+            overflow-x: hidden; -webkit-tap-highlight-color: transparent;
+        }
+        
+        .podium-area { text-align: center; margin: 20px 0 30px 0; }
+        .podium { 
+            display: inline-block; width: 60%; max-width: 300px; border-bottom: 3px solid #000; 
+            padding: 10px; color: #000; letter-spacing: 15px; font-size: 22px; font-weight: 900;
+        }
+
+        /* 烟花画布层 */
+        #fireworks-canvas { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            pointer-events: none; z-index: 100; transition: opacity 2s ease; /* 消失时的过渡效果 */
+        }
+
+        .controls { text-align: center; margin-bottom: 20px; position: relative; z-index: 110; }
+        
+        #startBtn { 
+            padding: 15px 40px; font-size: 18px; cursor: pointer; font-weight: 900;
+            background: #000; color: #fff; border: none; letter-spacing: 3px; border-radius: 0px;
+        }
+        #startBtn:disabled { display: none; }
+
+        .classroom {
+            display: grid; gap: 10px; max-width: 1100px; margin: 0 auto; padding: 5px; z-index: 10;
+        }
+
+        @media (min-width: 769px) { .classroom { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px) { .classroom { grid-template-columns: repeat(2, 1fr); } }
+
+        .desk-group { display: flex; border: 3px solid #000; height: 85px; background: #fff; box-sizing: border-box; }
+        
+        .seat {
+            flex: 1; display: flex; flex-direction: column; border-right: 3px solid #000;
+            opacity: 0; transition: all 0.1s ease; overflow: hidden;
+        }
+        .seat:last-child { border-right: none; }
+
+        .seat.reveal {
+            opacity: 1; animation: tension-pop 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes tension-pop { 
+            0% { transform: scale(0.5); background: #000; } 
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); background: #fff; } 
+        }
+
+        .id-row { flex: 1; font-size: 9px; display: flex; align-items: center; justify-content: center; color: #888; }
+        .name-row { flex: 2; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; color: #000; }
+        
+        #final-text {
+            position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 40px; font-weight: 900; color: #000; display: none; z-index: 105; 
+            text-align: center; width: 100%; background: rgba(255,255,255,0.8); padding: 20px 0;
+        }
+        .fade-out { animation: fadeOutMsg 2s forwards; }
+        @keyframes fadeOutMsg { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
     </style>
 </head>
-
 <body>
-
-<canvas id="fireworks-canvas"></canvas>
-<div id="final-text">分配完成</div>
-
-<div class="podium-area">
-    <div class="podium">讲 台</div>
-</div>
-
-<div class="controls">
-    <button id="startBtn" onclick="runProtocol()">开始执行</button>
-</div>
-
-<div id="main-grid" class="classroom"></div>
 <script>
     const studentData = [
         ["2021542", "李显彬"], ["2021220", "林俊豪"], ["2021374", "谢仪慧"], ["2021598", "蔡婉婷"],
@@ -156,6 +201,92 @@
                 ctx.arc(p.x, p.y, 2.5, 0, 7);
                 ctx.fill();
             }
+        });
+    }
+    initGrid();
+</script>
+<canvas id="fireworks-canvas"></canvas>
+<div id="final-text">分配完成</div>
+
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" preload="auto"></audio> 
+<audio id="fireworkSound" src="https://assets.mixkit.co/sfx/preview/mixkit-firework-explosion-1702.mp3" preload="auto"></audio>
+<audio id="applauseSound" src="https://assets.mixkit.co/sfx/preview/mixkit-crowd-clapping-and-cheering-1433.mp3" preload="auto"></audio>
+
+<div class="podium-area"><div class="podium">讲 台</div></div>
+<div class="controls"><button id="startBtn" onclick="runProtocol()">开始执行</button></div>
+<div id="main-grid" class="classroom"></div>
+ let currentDelay = 1000;
+        order.forEach((seatIndex, i) => {
+            // 控制在1分钟左右的节奏
+            const step = 1250 + (Math.random() * 300); 
+            currentDelay += step;
+
+            // 倒数第2人前的史诗停顿 (3.5秒)
+            if (i === 38) currentDelay += 3500;
+
+            setTimeout(() => {
+                const el = document.getElementById(seat-${seatIndex});
+                if (el) {
+                    el.innerHTML = <div class="id-row">${studentData[i][0]}</div><div class="name-row">${studentData[i][1]}</div>;
+                    el.classList.add('reveal');
+                    revealed++;
+                    
+                    if (revealed === 40) {
+                        fadeOutMusic(music);
+                        setTimeout(finish, 800);
+                    }
+                }
+            }, currentDelay);
+        });
+    }
+
+    function fadeOutMusic(audio) {
+        let vol = 1.0;
+        const fade = setInterval(() => {
+            if (vol > 0.05) { vol -= 0.05; audio.volume = vol; }
+            else { audio.pause(); clearInterval(fade); }
+        }, 100);
+    }
+
+    function finish() {
+        const canvasEl = document.getElementById('fireworks-canvas');
+        document.getElementById('fireworkSound').play();
+        document.getElementById('applauseSound').play();
+        document.getElementById('final-text').style.display = 'block';
+        
+        stopFireworks = false;
+        startFireworks();
+
+        // 关键逻辑：8秒后清理特效
+        setTimeout(() => {
+            document.getElementById('final-text').classList.add('fade-out');
+            canvasEl.style.opacity = '0'; // 烟花平滑淡出
+            setTimeout(() => {
+                stopFireworks = true; // 彻底停止动画循环
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空画布
+            }, 2000);
+        }, 8000);
+    }
+
+    // 烟花逻辑还原
+    const canvas = document.getElementById('fireworks-canvas');
+    const ctx = canvas.getContext('2d');
+    let pts = [];
+    function startFireworks() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; loop(); }
+    function loop() {
+        if (stopFireworks) return;
+        requestAnimationFrame(loop);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (Math.random() < 0.3) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.4;
+            const col = hsl(0, 0%, ${Math.random() * 20}%); 
+            for(let i=0; i<30; i++) pts.push({x, y, vx:(Math.random()-0.5)*18, vy:(Math.random()-0.5)*18, a:1, c:col});
+        }
+        pts.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.a -= 0.025;
+            if (p.a <= 0) pts.splice(i, 1);
+            else { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, 7); ctx.fill(); }
         });
     }
     initGrid();
