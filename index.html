@@ -17,7 +17,6 @@
             padding: 10px; color: #000; letter-spacing: 15px; font-size: 22px; font-weight: 900;
         }
 
-        /* 烟花画布层 */
         #fireworks-canvas { 
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
             pointer-events: none; z-index: 100; transition: opacity 2s ease;
@@ -116,18 +115,15 @@
         return copy;
     }
 
-    // 生成“出场顺序固定、座位随机”的座位顺序
     function buildSeatOrder() {
-        // 固定让两人坐在一起，左下角最后一排：seat-32 和 seat-33
         const fixedPair = [
-            { name: "朱紫恩", seat: 32 },
-            { name: "李宇泽", seat: 33 }
+            { name: "李宇泽", seat: 32 },
+            { name: "朱紫恩", seat: 33 }
         ];
 
         const fixedNames = fixedPair.map(item => item.name);
         const fixedSeats = fixedPair.map(item => item.seat);
 
-        // 其他可用座位
         const otherSeats = [];
         for (let i = 0; i < 40; i++) {
             if (!fixedSeats.includes(i)) otherSeats.push(i);
@@ -135,7 +131,6 @@
 
         const shuffledOtherSeats = shuffleArray(otherSeats);
 
-        // seatOrder[i] = studentData[i] 要去的座位号
         const seatOrder = new Array(40);
         let otherSeatPointer = 0;
 
@@ -162,8 +157,6 @@
         music.play();
         document.getElementById('startBtn').disabled = true;
 
-        // 保持“人物出场顺序”跟原本一样
-        // 只改变他们各自坐到哪个位置
         const seatOrder = buildSeatOrder();
         
         let currentDelay = 1000;
@@ -171,7 +164,6 @@
             const step = 1250 + (Math.random() * 300); 
             currentDelay += step;
 
-            // 倒数第2人前的史诗停顿
             if (i === 38) currentDelay += 3500;
 
             setTimeout(() => {
@@ -223,7 +215,6 @@
         }, 8000);
     }
 
-    // 烟花逻辑还原
     const canvas = document.getElementById('fireworks-canvas');
     const ctx = canvas.getContext('2d');
     let pts = [];
