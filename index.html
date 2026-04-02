@@ -116,42 +116,42 @@
         return copy;
     }
 
-    function buildFinalAssignment() {
-        // 左下角最后一排的两个座位
-        // 按你现在的网格逻辑，最后一排是 seat-32 到 seat-39
-        // 左下角最后一组是 seat-32 和 seat-33
-        const fixedAssignments = {
-            32: "李宇泽",
-            33: "朱紫恩"
-        };
+    // 生成“出场顺序固定、座位随机”的座位顺序
+    function buildSeatOrder() {
+        // 固定让两人坐在一起，左下角最后一排：seat-32 和 seat-33
+        const fixedPair = [
+            { name: "朱紫恩", seat: 32 },
+            { name: "李宇泽", seat: 33 }
+        ];
 
-        const usedNames = Object.values(fixedAssignments);
+        const fixedNames = fixedPair.map(item => item.name);
+        const fixedSeats = fixedPair.map(item => item.seat);
 
-        // 过滤掉已固定的学生
-        const remainingStudents = studentData.filter(student => !usedNames.includes(student[1]));
-
-        // 随机打乱剩下的学生
-        const shuffledRemaining = shuffleArray(remainingStudents);
-
-        // 最终按 seat index 存学生资料
-        const finalAssignment = new Array(40);
-
-        // 先放固定学生
-        for (const seatIndex in fixedAssignments) {
-            const studentName = fixedAssignments[seatIndex];
-            finalAssignment[seatIndex] = studentData.find(student => student[1] === studentName);
+        // 其他可用座位
+        const otherSeats = [];
+        for (let i = 0; i < 40; i++) {
+            if (!fixedSeats.includes(i)) otherSeats.push(i);
         }
 
-        // 再填其他空位
-        let pointer = 0;
-        for (let i = 0; i < 40; i++) {
-            if (!finalAssignment[i]) {
-                finalAssignment[i] = shuffledRemaining[pointer];
-                pointer++;
+        const shuffledOtherSeats = shuffleArray(otherSeats);
+
+        // seatOrder[i] = studentData[i] 要去的座位号
+        const seatOrder = new Array(40);
+        let otherSeatPointer = 0;
+
+        for (let i = 0; i < studentData.length; i++) {
+            const studentName = studentData[i][1];
+            const fixed = fixedPair.find(item => item.name === studentName);
+
+            if (fixed) {
+                seatOrder[i] = fixed.seat;
+            } else {
+                seatOrder[i] = shuffledOtherSeats[otherSeatPointer];
+                otherSeatPointer++;
             }
         }
 
-        return finalAssignment;
+        return seatOrder;
     }
 
     let revealed = 0;
@@ -162,23 +162,22 @@
         music.play();
         document.getElementById('startBtn').disabled = true;
 
-        const finalAssignment = buildFinalAssignment();
-
-        // 座位出现顺序仍然随机，不改变你的特效节奏
-        const order = shuffleArray(Array.from({ length: 40 }, (_, i) => i));
+        // 保持“人物出场顺序”跟原本一样
+        // 只改变他们各自坐到哪个位置
+        const seatOrder = buildSeatOrder();
         
         let currentDelay = 1000;
-        order.forEach((seatIndex, i) => {
+        studentData.forEach((student, i) => {
             const step = 1250 + (Math.random() * 300); 
             currentDelay += step;
 
+            // 倒数第2人前的史诗停顿
             if (i === 38) currentDelay += 3500;
 
             setTimeout(() => {
+                const seatIndex = seatOrder[i];
                 const el = document.getElementById(`seat-${seatIndex}`);
-                const student = finalAssignment[seatIndex];
-
-                if (el && student) {
+                if (el) {
                     el.innerHTML = `<div class="id-row">${student[0]}</div><div class="name-row">${student[1]}</div>`;
                     el.classList.add('reveal');
                     revealed++;
@@ -195,12 +194,12 @@
     function fadeOutMusic(audio) {
         let vol = 1.0;
         const fade = setInterval(() => {
-            if (vol > 0.05) {
-                vol -= 0.05;
-                audio.volume = vol;
-            } else {
-                audio.pause();
-                clearInterval(fade);
+            if (vol > 0.05) { 
+                vol -= 0.05; 
+                audio.volume = vol; 
+            } else { 
+                audio.pause(); 
+                clearInterval(fade); 
             }
         }, 100);
     }
@@ -229,10 +228,10 @@
     const ctx = canvas.getContext('2d');
     let pts = [];
 
-    function startFireworks() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        loop();
+    function startFireworks() { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+        loop(); 
     }
 
     function loop() {
@@ -244,10 +243,9 @@
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height * 0.4;
             const col = `hsl(0, 0%, ${Math.random() * 20}%)`; 
-            for (let i = 0; i < 30; i++) {
+            for(let i = 0; i < 30; i++) {
                 pts.push({
-                    x,
-                    y,
+                    x, y,
                     vx: (Math.random() - 0.5) * 18,
                     vy: (Math.random() - 0.5) * 18,
                     a: 1,
@@ -261,10 +259,8 @@
             p.y += p.vy;
             p.vy += 0.25;
             p.a -= 0.025;
-
-            if (p.a <= 0) {
-                pts.splice(i, 1);
-            } else {
+            if (p.a <= 0) pts.splice(i, 1);
+            else {
                 ctx.globalAlpha = p.a;
                 ctx.fillStyle = p.c;
                 ctx.beginPath();
