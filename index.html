@@ -1,3 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3ACJ 命运分配系统</title>
+
+    <style>
+        /* 你的 CSS */
+    </style>
+</head>
+
+<body>
+
+<canvas id="fireworks-canvas"></canvas>
+<div id="final-text">分配完成</div>
+
+<div class="podium-area">
+    <div class="podium">讲 台</div>
+</div>
+
+<div class="controls">
+    <button id="startBtn" onclick="runProtocol()">开始执行</button>
+</div>
+
+<div id="main-grid" class="classroom"></div>
 <script>
     const studentData = [
         ["2021542", "李显彬"], ["2021220", "林俊豪"], ["2021374", "谢仪慧"], ["2021598", "蔡婉婷"],
@@ -134,3 +160,5 @@
     }
     initGrid();
 </script>
+</body>
+</html>
