@@ -20,7 +20,7 @@
         /* 烟花画布层 */
         #fireworks-canvas { 
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            pointer-events: none; z-index: 100; transition: opacity 2s ease; /* 消失时的过渡效果 */
+            pointer-events: none; z-index: 100; transition: opacity 2s ease;
         }
 
         .controls { text-align: center; margin-bottom: 20px; position: relative; z-index: 110; }
@@ -69,6 +69,18 @@
     </style>
 </head>
 <body>
+
+<canvas id="fireworks-canvas"></canvas>
+<div id="final-text">分配完成</div>
+
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" preload="auto"></audio> 
+<audio id="fireworkSound" src="https://assets.mixkit.co/sfx/preview/mixkit-firework-explosion-1702.mp3" preload="auto"></audio>
+<audio id="applauseSound" src="https://assets.mixkit.co/sfx/preview/mixkit-crowd-clapping-and-cheering-1433.mp3" preload="auto"></audio>
+
+<div class="podium-area"><div class="podium">讲 台</div></div>
+<div class="controls"><button id="startBtn" onclick="runProtocol()">开始执行</button></div>
+<div id="main-grid" class="classroom"></div>
+
 <script>
     const studentData = [
         ["2021542", "李显彬"], ["2021220", "林俊豪"], ["2021374", "谢仪慧"], ["2021598", "蔡婉婷"],
@@ -95,6 +107,53 @@
         }
     }
 
+    function shuffleArray(arr) {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    }
+
+    function buildFinalAssignment() {
+        // 左下角最后一排的两个座位
+        // 按你现在的网格逻辑，最后一排是 seat-32 到 seat-39
+        // 左下角最后一组是 seat-32 和 seat-33
+        const fixedAssignments = {
+            32: "李宇泽",
+            33: "朱紫恩"
+        };
+
+        const usedNames = Object.values(fixedAssignments);
+
+        // 过滤掉已固定的学生
+        const remainingStudents = studentData.filter(student => !usedNames.includes(student[1]));
+
+        // 随机打乱剩下的学生
+        const shuffledRemaining = shuffleArray(remainingStudents);
+
+        // 最终按 seat index 存学生资料
+        const finalAssignment = new Array(40);
+
+        // 先放固定学生
+        for (const seatIndex in fixedAssignments) {
+            const studentName = fixedAssignments[seatIndex];
+            finalAssignment[seatIndex] = studentData.find(student => student[1] === studentName);
+        }
+
+        // 再填其他空位
+        let pointer = 0;
+        for (let i = 0; i < 40; i++) {
+            if (!finalAssignment[i]) {
+                finalAssignment[i] = shuffledRemaining[pointer];
+                pointer++;
+            }
+        }
+
+        return finalAssignment;
+    }
+
     let revealed = 0;
     let stopFireworks = false;
 
@@ -103,131 +162,24 @@
         music.play();
         document.getElementById('startBtn').disabled = true;
 
-        // 固定朱紫恩和李宇泽坐在左下角最后一排
-        const zhuIdx = 17; // 朱紫恩
-        const liIdx = 39;  // 李宇泽
+        const finalAssignment = buildFinalAssignment();
 
-        // 左下角最后一排座位编号
-        const fixedSeat1 = 32;
-        const fixedSeat2 = 33;
-
-        // 其余座位随机
-        const otherSeats = Array.from({ length: 40 }, (_, i) => i)
-            .filter(s => s !== fixedSeat1 && s !== fixedSeat2)
-            .sort(() => Math.random() - 0.5);
-
-        const order = new Array(40);
-        order[zhuIdx] = fixedSeat1; // 朱紫恩坐左边
-        order[liIdx] = fixedSeat2;  // 李宇泽坐右边
-
-        let seatPtr = 0;
-        for (let i = 0; i < 40; i++) {
-            if (i !== zhuIdx && i !== liIdx) {
-                order[i] = otherSeats[seatPtr++];
-            }
-        }
-
+        // 座位出现顺序仍然随机，不改变你的特效节奏
+        const order = shuffleArray(Array.from({ length: 40 }, (_, i) => i));
+        
         let currentDelay = 1000;
         order.forEach((seatIndex, i) => {
-            const step = 1250 + (Math.random() * 300);
+            const step = 1250 + (Math.random() * 300); 
             currentDelay += step;
 
             if (i === 38) currentDelay += 3500;
 
             setTimeout(() => {
                 const el = document.getElementById(`seat-${seatIndex}`);
-                if (el) {
-                    el.innerHTML = `<div class="id-row">${studentData[i][0]}</div><div class="name-row">${studentData[i][1]}</div>`;
-                    el.classList.add('reveal');
-                    revealed++;
+                const student = finalAssignment[seatIndex];
 
-                    if (revealed === 40) {
-                        fadeOutMusic(music);
-                        setTimeout(finish, 800);
-                    }
-                }
-            }, currentDelay);
-        });
-    }
-
-    function fadeOutMusic(audio) {
-        let vol = 1.0;
-        const fade = setInterval(() => {
-            if (vol > 0.05) { vol -= 0.05; audio.volume = vol; }
-            else { audio.pause(); clearInterval(fade); }
-        }, 100);
-    }
-
-    function finish() {
-        const canvasEl = document.getElementById('fireworks-canvas');
-        document.getElementById('fireworkSound').play();
-        document.getElementById('applauseSound').play();
-        document.getElementById('final-text').style.display = 'block';
-
-        stopFireworks = false;
-        startFireworks();
-
-        setTimeout(() => {
-            document.getElementById('final-text').classList.add('fade-out');
-            canvasEl.style.opacity = '0';
-            setTimeout(() => {
-                stopFireworks = true;
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }, 2000);
-        }, 8000);
-    }
-
-    const canvas = document.getElementById('fireworks-canvas');
-    const ctx = canvas.getContext('2d');
-    let pts = [];
-    function startFireworks() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; loop(); }
-    function loop() {
-        if (stopFireworks) return;
-        requestAnimationFrame(loop);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (Math.random() < 0.3) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height * 0.4;
-            const col = `hsl(0, 0%, ${Math.random() * 20}%)`;
-            for (let i = 0; i < 30; i++) pts.push({ x, y, vx: (Math.random() - 0.5) * 18, vy: (Math.random() - 0.5) * 18, a: 1, c: col });
-        }
-        pts.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.a -= 0.025;
-            if (p.a <= 0) pts.splice(i, 1);
-            else {
-                ctx.globalAlpha = p.a;
-                ctx.fillStyle = p.c;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 2.5, 0, 7);
-                ctx.fill();
-            }
-        });
-    }
-    initGrid();
-</script>
-<canvas id="fireworks-canvas"></canvas>
-<div id="final-text">分配完成</div>
-
-<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" preload="auto"></audio> 
-<audio id="fireworkSound" src="https://assets.mixkit.co/sfx/preview/mixkit-firework-explosion-1702.mp3" preload="auto"></audio>
-<audio id="applauseSound" src="https://assets.mixkit.co/sfx/preview/mixkit-crowd-clapping-and-cheering-1433.mp3" preload="auto"></audio>
-
-<div class="podium-area"><div class="podium">讲 台</div></div>
-<div class="controls"><button id="startBtn" onclick="runProtocol()">开始执行</button></div>
-<div id="main-grid" class="classroom"></div>
- let currentDelay = 1000;
-        order.forEach((seatIndex, i) => {
-            // 控制在1分钟左右的节奏
-            const step = 1250 + (Math.random() * 300); 
-            currentDelay += step;
-
-            // 倒数第2人前的史诗停顿 (3.5秒)
-            if (i === 38) currentDelay += 3500;
-
-            setTimeout(() => {
-                const el = document.getElementById(seat-${seatIndex});
-                if (el) {
-                    el.innerHTML = <div class="id-row">${studentData[i][0]}</div><div class="name-row">${studentData[i][1]}</div>;
+                if (el && student) {
+                    el.innerHTML = `<div class="id-row">${student[0]}</div><div class="name-row">${student[1]}</div>`;
                     el.classList.add('reveal');
                     revealed++;
                     
@@ -243,8 +195,13 @@
     function fadeOutMusic(audio) {
         let vol = 1.0;
         const fade = setInterval(() => {
-            if (vol > 0.05) { vol -= 0.05; audio.volume = vol; }
-            else { audio.pause(); clearInterval(fade); }
+            if (vol > 0.05) {
+                vol -= 0.05;
+                audio.volume = vol;
+            } else {
+                audio.pause();
+                clearInterval(fade);
+            }
         }, 100);
     }
 
@@ -257,13 +214,12 @@
         stopFireworks = false;
         startFireworks();
 
-        // 关键逻辑：8秒后清理特效
         setTimeout(() => {
             document.getElementById('final-text').classList.add('fade-out');
-            canvasEl.style.opacity = '0'; // 烟花平滑淡出
+            canvasEl.style.opacity = '0';
             setTimeout(() => {
-                stopFireworks = true; // 彻底停止动画循环
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空画布
+                stopFireworks = true;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }, 2000);
         }, 8000);
     }
@@ -272,23 +228,54 @@
     const canvas = document.getElementById('fireworks-canvas');
     const ctx = canvas.getContext('2d');
     let pts = [];
-    function startFireworks() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; loop(); }
+
+    function startFireworks() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        loop();
+    }
+
     function loop() {
         if (stopFireworks) return;
         requestAnimationFrame(loop);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         if (Math.random() < 0.3) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height * 0.4;
-            const col = hsl(0, 0%, ${Math.random() * 20}%); 
-            for(let i=0; i<30; i++) pts.push({x, y, vx:(Math.random()-0.5)*18, vy:(Math.random()-0.5)*18, a:1, c:col});
+            const col = `hsl(0, 0%, ${Math.random() * 20}%)`; 
+            for (let i = 0; i < 30; i++) {
+                pts.push({
+                    x,
+                    y,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: (Math.random() - 0.5) * 18,
+                    a: 1,
+                    c: col
+                });
+            }
         }
+
         pts.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.a -= 0.025;
-            if (p.a <= 0) pts.splice(i, 1);
-            else { ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, 7); ctx.fill(); }
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.25;
+            p.a -= 0.025;
+
+            if (p.a <= 0) {
+                pts.splice(i, 1);
+            } else {
+                ctx.globalAlpha = p.a;
+                ctx.fillStyle = p.c;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2.5, 0, 7);
+                ctx.fill();
+            }
         });
+
+        ctx.globalAlpha = 1;
     }
+
     initGrid();
 </script>
 </body>
