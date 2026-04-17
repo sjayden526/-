@@ -116,50 +116,26 @@
     }
 
     function buildSeatOrder() {
-        const seatOrder = new Array(40);
-
-        // 1. 李宇泽左，朱紫恩右，固定在左下角最后一排
         const liIndex = studentData.findIndex(s => s[1] === "李宇泽");
         const zhuIndex = studentData.findIndex(s => s[1] === "朱紫恩");
-        seatOrder[liIndex] = 32;
-        seatOrder[zhuIndex] = 33;
 
-        // 2. 苏哲正 + 韦裔馨 必须坐一起，而且在下三排
-        // 下三排成对起始位: 16,18,20,...,38
-        // 但 32 已经被占用，所以排除
-        const availableBottomPairStarts = [];
-        for (let i = 16; i <= 38; i += 2) {
-            if (i !== 32) {
-                availableBottomPairStarts.push(i);
-            }
-        }
+        const allSeats = Array.from({ length: 40 }, (_, i) => i);
 
-        const chosenPairStart = availableBottomPairStarts[
-            Math.floor(Math.random() * availableBottomPairStarts.length)
-        ];
+        // 把 32 和 33 从随机池移除
+        const remainingSeats = allSeats.filter(s => s !== 32 && s !== 33);
 
-        const suIndex = studentData.findIndex(s => s[1] === "苏哲正");
-        const weiIndex = studentData.findIndex(s => s[1] === "韦裔馨");
+        const shuffledSeats = shuffleArray(remainingSeats);
 
-        seatOrder[suIndex] = chosenPairStart;
-        seatOrder[weiIndex] = chosenPairStart + 1;
-
-        // 3. 剩下的座位随机分给其他人
-        const usedSeats = seatOrder.filter(v => v !== undefined);
-
-        const remainingSeats = [];
-        for (let i = 0; i < 40; i++) {
-            if (!usedSeats.includes(i)) {
-                remainingSeats.push(i);
-            }
-        }
-
-        const shuffledRemainingSeats = shuffleArray(remainingSeats);
-
+        const seatOrder = new Array(40);
         let ptr = 0;
+
         for (let i = 0; i < studentData.length; i++) {
-            if (seatOrder[i] === undefined) {
-                seatOrder[i] = shuffledRemainingSeats[ptr];
+            if (i === liIndex) {
+                seatOrder[i] = 32;
+            } else if (i === zhuIndex) {
+                seatOrder[i] = 33;
+            } else {
+                seatOrder[i] = shuffledSeats[ptr];
                 ptr++;
             }
         }
