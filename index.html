@@ -116,31 +116,8 @@
     }
 
     function buildSeatOrder() {
-        const liIndex = studentData.findIndex(s => s[1] === "李宇泽");
-        const zhuIndex = studentData.findIndex(s => s[1] === "朱紫恩");
-
         const allSeats = Array.from({ length: 40 }, (_, i) => i);
-
-        // 把 32 和 33 从随机池移除
-        const remainingSeats = allSeats.filter(s => s !== 32 && s !== 33);
-
-        const shuffledSeats = shuffleArray(remainingSeats);
-
-        const seatOrder = new Array(40);
-        let ptr = 0;
-
-        for (let i = 0; i < studentData.length; i++) {
-            if (i === liIndex) {
-                seatOrder[i] = 32;
-            } else if (i === zhuIndex) {
-                seatOrder[i] = 33;
-            } else {
-                seatOrder[i] = shuffledSeats[ptr];
-                ptr++;
-            }
-        }
-
-        return seatOrder;
+        return shuffleArray(allSeats);
     }
 
     let revealed = 0;
@@ -151,6 +128,7 @@
         music.play();
         document.getElementById('startBtn').disabled = true;
 
+        // 完全随机座位，但出场顺序保持 studentData 原顺序
         const seatOrder = buildSeatOrder();
         
         let currentDelay = 1000;
