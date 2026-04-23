@@ -72,7 +72,7 @@
 <canvas id="fireworks-canvas"></canvas>
 <div id="final-text">分配完成</div>
 
-<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" preload="auto"></audio> 
+<audio id="bgMusic" src="tarzan_and_jane.mp3" preload="auto"></audio> 
 <audio id="fireworkSound" src="https://assets.mixkit.co/sfx/preview/mixkit-firework-explosion-1702.mp3" preload="auto"></audio>
 <audio id="applauseSound" src="https://assets.mixkit.co/sfx/preview/mixkit-crowd-clapping-and-cheering-1433.mp3" preload="auto"></audio>
 
@@ -115,6 +115,7 @@
         return copy;
     }
 
+    // 移除之前的内定逻辑，完全随机分配座位
     function buildSeatOrder() {
         const allSeats = Array.from({ length: 40 }, (_, i) => i);
         return shuffleArray(allSeats);
@@ -128,15 +129,16 @@
         music.play();
         document.getElementById('startBtn').disabled = true;
 
-        // 完全随机座位，但出场顺序保持 studentData 原顺序
+        // 打乱学生名单，让出场顺序完全随机
+        const shuffledStudents = shuffleArray(studentData);
+        // 生成完全随机的座位分配
         const seatOrder = buildSeatOrder();
         
         let currentDelay = 1000;
-        studentData.forEach((student, i) => {
+        
+        shuffledStudents.forEach((student, i) => {
             const step = 1250 + (Math.random() * 300); 
             currentDelay += step;
-
-            if (i === 38) currentDelay += 3500;
 
             setTimeout(() => {
                 const seatIndex = seatOrder[i];
