@@ -115,7 +115,6 @@
         return copy;
     }
 
-    // 移除之前的内定逻辑，完全随机分配座位
     function buildSeatOrder() {
         const allSeats = Array.from({ length: 40 }, (_, i) => i);
         return shuffleArray(allSeats);
@@ -126,12 +125,16 @@
 
     function runProtocol() {
         const music = document.getElementById('bgMusic');
+        music.currentTime = 0;
+        music.volume = 1.0;
         music.play();
+
         document.getElementById('startBtn').disabled = true;
 
-        // 打乱学生名单，让出场顺序完全随机
+        // 出场顺序完全随机
         const shuffledStudents = shuffleArray(studentData);
-        // 生成完全随机的座位分配
+
+        // 座位也完全随机
         const seatOrder = buildSeatOrder();
         
         let currentDelay = 1000;
@@ -140,9 +143,13 @@
             const step = 1250 + (Math.random() * 300); 
             currentDelay += step;
 
+            // 保留原本倒数第2人前的停顿效果
+            if (i === 38) currentDelay += 3500;
+
             setTimeout(() => {
                 const seatIndex = seatOrder[i];
                 const el = document.getElementById(`seat-${seatIndex}`);
+
                 if (el) {
                     el.innerHTML = `<div class="id-row">${student[0]}</div><div class="name-row">${student[1]}</div>`;
                     el.classList.add('reveal');
@@ -158,7 +165,7 @@
     }
 
     function fadeOutMusic(audio) {
-        let vol = 1.0;
+        let vol = audio.volume;
         const fade = setInterval(() => {
             if (vol > 0.05) { 
                 vol -= 0.05; 
@@ -182,6 +189,7 @@
         setTimeout(() => {
             document.getElementById('final-text').classList.add('fade-out');
             canvasEl.style.opacity = '0';
+
             setTimeout(() => {
                 stopFireworks = true;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -196,6 +204,7 @@
     function startFireworks() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
+        canvas.style.opacity = '1';
         loop(); 
     }
 
@@ -208,6 +217,7 @@
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height * 0.4;
             const col = `hsl(0, 0%, ${Math.random() * 20}%)`; 
+
             for(let i = 0; i < 30; i++) {
                 pts.push({
                     x, y,
@@ -224,8 +234,10 @@
             p.y += p.vy;
             p.vy += 0.25;
             p.a -= 0.025;
-            if (p.a <= 0) pts.splice(i, 1);
-            else {
+
+            if (p.a <= 0) {
+                pts.splice(i, 1);
+            } else {
                 ctx.globalAlpha = p.a;
                 ctx.fillStyle = p.c;
                 ctx.beginPath();
